@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "log.h": "c",
+        "at32f421_board.h": "c"
+    }
+}
