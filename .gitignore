@@ -2,3 +2,10 @@ build/
 *.d
 *.o
 document/
+obj/
+*.tar.gz
+xpack-riscv-none-elf-gcc-14.2.0-3
+*.elf
+*.hex
+*.lst
+*.map
