@@ -58,12 +58,8 @@ static void gpio_config(void)
 
   gpio_default_para_init(&gpio_initstructure);
   gpio_initstructure.gpio_mode = GPIO_MODE_ANALOG;
-  gpio_initstructure.gpio_pins = GPIO_PINS_4 | GPIO_PINS_5 | GPIO_PINS_6 | GPIO_PINS_7;
+  gpio_initstructure.gpio_pins = GPIO_PINS_0 | GPIO_PINS_4 | GPIO_PINS_5 | GPIO_PINS_6 | GPIO_PINS_7;
   gpio_init(GPIOA, &gpio_initstructure);
-
-  gpio_initstructure.gpio_mode = GPIO_MODE_ANALOG;
-  gpio_initstructure.gpio_pins = GPIO_PINS_0 | GPIO_PINS_1;
-  gpio_init(GPIOB, &gpio_initstructure);
 }
 
 /**

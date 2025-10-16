@@ -406,6 +406,9 @@ void DMA1_Channel5_4_IRQHandler(void)
     }
 }
 
+
+int pwm6_adc_init(void);
+
 /**
  * @brief  main function.
  * @param  none
@@ -418,6 +421,7 @@ int main(void)
     // dma_configuration();
     uart1_init(115200);
     uart2_init(115200);
+    pwm6_adc_init();
     delay_init();
     LOGI("u1 idle dma example fuck at32\r\n");
 

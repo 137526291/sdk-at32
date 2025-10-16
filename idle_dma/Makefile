@@ -38,6 +38,7 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
+src/6pwm_adc.c \
 src/delay.c \
 src/main.c \
 src/at32f421_int.c \
