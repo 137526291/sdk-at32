@@ -39,9 +39,8 @@ void setv_cmd(char argc, char *argv[])
         v = strtoul(argv[1], NULL, 10);
         //v[1] = strtoul(argv[2], NULL, 10);
         // set current v
-        esc_setv(v);
-        // forward to esc1 via uart1
-        uart1_tx("123");
+        // esc_setv(v);
+        LOGW("setv both %d\r\n", v);
     }
 
 }
@@ -66,6 +65,13 @@ const bcmd_t bcmd_tab[] = {
 #define USART1_TX_BUFFER_SIZE (COUNTOF(usart1_tx_buffer) - 1)
 #define USART1_RX_BUFFER_SIZE 64
 #define USART2_RX_BUFFER_SIZE 1024 // master u2 pa2 pa15 connect to BLE
+#define DMACH_U1TX DMA1_CHANNEL2
+#define DMACH_U1RX DMA1_CHANNEL3
+#define DMACH_U2TX DMA1_CHANNEL4
+#define DMACH_U2RX DMA1_CHANNEL5
+//uart2 esc0 -- ble, uart1 esc0 <--> esc1
+//for esc0: ble cmd-> uart2, forward to esc1 via uart1
+//for esc1: esc cmd-> uart1
 
 uint8_t usart2_tx_buffer[] = "usart transfer by dma interrupt: usart2 -> usart1 using dma";
 uint8_t usart1_tx_buffer[] = "usart transfer by dma interrupt: usart1 -> usart2 using dma";
@@ -73,18 +79,35 @@ uint8_t usart1_tx_buffer[] = "usart transfer by dma interrupt: usart1 -> usart2 
 uint8_t usart1_rx_buffer[USART1_RX_BUFFER_SIZE];
 uint8_t usart2_rx_buffer[USART2_RX_BUFFER_SIZE];
 
+
+#define UART_TX_DMA_FUNC_DECLARE(x) \
+static inline void dmatx_u##x(char *buf, uint16_t len)           \
+    {                                               \
+        if (len > USART##x##_TX_BUFFER_SIZE)        \
+            len = USART##x##_TX_BUFFER_SIZE;        \
+        memcpy(usart##x##_tx_buffer, buf, len);     \
+        DMACH_U##x##TX->ctrl_bit.chen = 0;          \
+        DMACH_U##x##TX->dtcnt = len;                \
+        DMACH_U##x##TX->ctrl_bit.chen = 1;          \
+    }
+
+UART_TX_DMA_FUNC_DECLARE(1) //usage: dmatx_u1(buf, len)
+UART_TX_DMA_FUNC_DECLARE(2)
+
 #define STRCMD_PREFIX '#'
 #define MAX_ARGS 5
 #define STRCMD_MAXLEN 20
 // we receive cmds like '#setv arg1 arg2' from BLE host, forward to slave esc
-void try_parse_cmd(char *buf, uint8_t sz)
+void try_parse_cmd(char *buf, uint8_t sz, int forward)
 {
     // strtok modifies the original string, so use a copy if the original must be preserved.
     char cmd_copy[STRCMD_MAXLEN];
     char *argv[MAX_ARGS] = {0};
     char argc = 0;
     char *saveptr;
-    strncpy(cmd_copy, buf, STRCMD_MAXLEN);
+    if (sz < 2 || buf[0] != STRCMD_PREFIX)
+        return; // not a cmd
+    strncpy(cmd_copy, buf+1, STRCMD_MAXLEN);
     char *token = strtok_r(cmd_copy, " ", &saveptr);
     while (NULL != token && argc < MAX_ARGS)
     {
@@ -96,9 +119,10 @@ void try_parse_cmd(char *buf, uint8_t sz)
     {
         if (0 == strcmp(bcmd_tab[i].cmd, argv[0]) && bcmd_tab[i].cb)
         {
+            LOGI("found cmd %s, argc=%d\r\n", argv[0], argc);
             bcmd_tab[i].cb(argc, argv);
             //uart forward cmd 
-            uart1_tx(cmd_copy);
+            forward ? dmatx_u1(buf, sz) : (void)0;//forward whole str
             break;
         }
     }
@@ -111,15 +135,45 @@ typedef void (*cb_func)(uint8_t *buf, uint16_t len);
 void u1rx_idle_cb_func(uint8_t *buf, uint16_t len)
 {
     printf("u1idma_cb: %s\r\n", buf);
+    try_parse_cmd((char *)buf, len, 0);//esc1
 }
 
 void u2rx_idle_cb_func(uint8_t *buf, uint16_t len)
 {
-    printf("u2idma_cb: %3d = %s\r\n", len, buf);
+    printf("u2cb: [%2d] %s\r\n", len, buf);
+    try_parse_cmd((char *)buf, len, 1);//esc0
 }
 
 cb_func rxidle_cb_u1 = u1rx_idle_cb_func;
 cb_func rxidle_cb_u2 = u2rx_idle_cb_func;
+
+// void u1dmatx(char *buf, uint16_t len)
+// {
+//     // uint16_t len = strlen(buf);
+//     if (len > USART1_TX_BUFFER_SIZE)
+//         len = USART1_TX_BUFFER_SIZE;
+//     memcpy(usart1_tx_buffer, buf, len);
+//     dma_channel_disable(DMACH_U1TX, TRUE);
+//     // DMACH_U1TX->ctrl_bit.chen = 0;
+//     DMACH_U1TX->dtcnt = len;
+//     // DMACH_U1TX->ctrl_bit.chen = 1;
+//     dma_channel_enable(DMACH_U1TX, TRUE);
+// }
+
+// void u2dmatx(char *buf, uint16_t len)
+// {
+//     // uint16_t len = strlen(buf);
+//     if (len > USART2_TX_BUFFER_SIZE)
+//         len = USART2_TX_BUFFER_SIZE;
+//     memcpy(usart2_tx_buffer, buf, len);
+//     dma_channel_disable(DMACH_U2TX, TRUE);
+//     DMACH_U2TX->ctrl_bit.chen = 0;
+//     DMACH_U2TX->dtcnt = len;
+//     DMACH_U2TX->ctrl_bit.chen = 1;
+//     dma_channel_enable(DMACH_U2TX, TRUE);
+// }
+
+
 
 /**
  * @brief  initialize uart1 in pb6 pb7
@@ -378,6 +432,7 @@ int main(void)
 
     while (1)
     {
+        // dmatx_u1("6", 1);
         // while(usart_flag_get(USART1, USART_TDBE_FLAG) == RESET);
         // usart_data_transmit(USART1, 0x55);
         delay_ms(1000);

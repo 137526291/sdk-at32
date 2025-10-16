@@ -3,7 +3,7 @@
 # Prefix for older riscv gcc is  risv-none-embed
 # Prefix for newer riscv gcc is  risv-none-elf
 # TOOLCHAIN_PREFIX := riscv-none-embed
-TOOLCHAIN_PREFIX := riscv-none-elf
+TOOLCHAIN_PREFIX := riscv-wch-elf
 
 
 
@@ -62,10 +62,13 @@ LIBS := $(STDPERIPHDRIVER_LIBS) $(BLE_LIB_LIBS)
 SECONDARY_FLASH := hid_keyboard.hex
 SECONDARY_LIST := hid_keyboard.lst
 SECONDARY_SIZE := hid_keyboard.siz
+SECONDARY_BIN := hid_keyboard.bin
 
 # ARCH is rv32imac on older gcc, rv32imac_zicsr on newer gcc
 # ARCH := rv32imac
-ARCH := rv32imac_zicsr_zifencei
+# ARCH := rv32imc_zicsr_zifencei
+ARCH := rv32imac_zicsr
+# ARCH := rv32imc_zba_zbb_zbc_zbs_xw
 
 CFLAGS_COMMON := \
   -march=$(ARCH) \
@@ -91,9 +94,10 @@ clean:
 	-rm $(SECONDARY_LIST)
 	-rm hid_keyboard.elf
 	-rm hid_keyboard.map
+	-rm hid_keyboard.bin
 
 .PHONY: secondary-outputs
-secondary-outputs: $(SECONDARY_FLASH) $(SECONDARY_LIST) $(SECONDARY_SIZE)
+secondary-outputs: $(SECONDARY_FLASH) $(SECONDARY_LIST) $(SECONDARY_SIZE) $(SECONDARY_BIN)
 
 hid_keyboard.elf: $(OBJS)
 	${TOOLCHAIN_PREFIX}-gcc \
@@ -125,6 +129,9 @@ hid_keyboard.elf: $(OBJS)
 
 %.siz: %.elf
 	@ ${TOOLCHAIN_PREFIX}-size --format=berkeley "$<"
+
+%.bin: %.elf
+	@ ${TOOLCHAIN_PREFIX}-objcopy -O binary "$<"  "$@"
 
 obj/%.o: ./%.c
 	@ mkdir --parents $(dir $@)

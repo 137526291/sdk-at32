@@ -643,9 +643,9 @@ __attribute__((always_inline)) RV_STATIC_INLINE uint32_t __get_SP(void)
 #include <string.h>
 __attribute__((always_inline)) RV_STATIC_INLINE void __MCPY(void *dst, void *start, void *end)
 {
-    // __asm volatile("mcpy %2, %0, %1" : \
-    //                "+r"(start), "+r"(dst) : "r"(end) : "memory");
-    memcpy(dst, start, end-start);
+    __asm volatile("mcpy %2, %0, %1" : \
+                   "+r"(start), "+r"(dst) : "r"(end) : "memory");
+    //memcpy(dst, start, end-start);
 }
 
 #define SysTick_SR_SWIE             (1 << 31)

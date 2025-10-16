@@ -33,11 +33,11 @@ extern "C" {
 #define SIMPLEPROFILE_CHAR5         4           // RW uint8_t - Profile Characteristic 4 value
 
 // Simple Profile Service UUID
-#define SIMPLEPROFILE_SERV_UUID     0xFFE0
+#define SIMPLEPROFILE_SERV_UUID     0x0001
 
 // Key Pressed UUID
-#define SIMPLEPROFILE_CHAR1_UUID    0xFFE1
-#define SIMPLEPROFILE_CHAR2_UUID    0xFFE2
+#define SIMPLEPROFILE_CHAR1RX_UUID    0x0002 //RX
+#define SIMPLEPROFILE_CHAR2TX_UUID    0x0003 //TX
 #define SIMPLEPROFILE_CHAR3_UUID    0xFFE3
 #define SIMPLEPROFILE_CHAR4_UUID    0xFFE4
 #define SIMPLEPROFILE_CHAR5_UUID    0xFFE5
@@ -46,8 +46,8 @@ extern "C" {
 #define SIMPLEPROFILE_SERVICE       0x00000001
 
 // Length of characteristic in bytes ( Default MTU is 23 )
-#define SIMPLEPROFILE_CHAR1_LEN     1
-#define SIMPLEPROFILE_CHAR2_LEN     1
+#define SIMPLEPROFILE_CHAR1RX_LEN     20
+#define SIMPLEPROFILE_CHAR2TX_LEN     20
 #define SIMPLEPROFILE_CHAR3_LEN     1
 #define SIMPLEPROFILE_CHAR4_LEN     1
 #define SIMPLEPROFILE_CHAR5_LEN     5
@@ -65,12 +65,12 @@ extern "C" {
  */
 
 // Callback when a characteristic value has changed
-typedef void (*simpleProfileChange_t)(uint8_t paramID, uint8_t *pValue, uint16_t len);
+typedef void (*serial_profileChange_t)(uint8_t paramID, uint8_t *pValue, uint16_t len);
 
 typedef struct
 {
-    simpleProfileChange_t pfnSimpleProfileChange; // Called when characteristic value changes
-} simpleProfileCBs_t;
+    serial_profileChange_t pfnSimpleProfileChange; // Called when characteristic value changes
+} serial_profileCBs_t;
 
 /*********************************************************************
  * API FUNCTIONS
@@ -92,7 +92,7 @@ extern bStatus_t SimpleProfile_AddService(uint32_t services);
  *
  *    appCallbacks - pointer to application callbacks.
  */
-extern bStatus_t SimpleProfile_RegisterAppCBs(simpleProfileCBs_t *appCallbacks);
+extern bStatus_t SimpleProfile_RegisterAppCBs(serial_profileCBs_t *appCallbacks);
 
 /*
  * SimpleProfile_SetParameter - Set a Simple GATT Profile parameter.
@@ -118,12 +118,12 @@ extern bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *va
 extern bStatus_t SimpleProfile_GetParameter(uint8_t param, void *value);
 
 /*
- * simpleProfile_Notify - Send notification.
+ * serial_profile_Notify - Send notification.
  *
  *    connHandle - connect handle
  *    pNoti - pointer to structure to notify.
  */
-extern bStatus_t simpleProfile_Notify(uint16_t connHandle, attHandleValueNoti_t *pNoti);
+extern bStatus_t serial_profile_Notify(uint16_t connHandle, attHandleValueNoti_t *pNoti);
 
 /*********************************************************************
 *********************************************************************/

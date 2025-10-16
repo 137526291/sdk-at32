@@ -416,7 +416,7 @@ void *_sbrk(ptrdiff_t incr)
 __HIGH_CODE
 void *__wrap_memcpy(void *dst, void *src, size_t size)
 {
-    // __MCPY(dst, src, (void *)((uint32_t)src+size));
-    memcpy(dst, src, size);
+    __MCPY(dst, src, (void *)((uint32_t)src+size));
+    // memcpy(dst, src, size);
     return dst;
 }

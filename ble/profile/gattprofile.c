@@ -24,38 +24,46 @@
  * CONSTANTS
  */
 
-// Position of simpleProfilechar4 value in attribute array
-#define SIMPLEPROFILE_CHAR4_VALUE_POS    11
+// Position of serial_profilechar4 value in attribute array
+// #define SIMPLEPROFILE_NOTIFY_CHAR_VALUE_POS    11  use SERIAL_IDX_CHAR_TX_VALUE
+#define CHAR_DESCRIPTION 0
 
 /*********************************************************************
  * TYPEDEFS
  */
-
+#define NUS_UUID128_ARR(uuid16)       {0x9E, 0xCA, 0xDC, 0x24, \
+                                        0x0E, 0xE5, 0xA9, 0xE0, \
+                                        0x93, 0xF3, 0xA3, 0xB5, \
+                                        (uuid16 & 0xff),(uuid16&0xff00)>>8, 0x40, 0x6E}
 /*********************************************************************
  * GLOBAL VARIABLES
  */
-// Simple GATT Profile Service UUID: 0xFFF0
-const uint8_t simpleProfileServUUID[ATT_BT_UUID_SIZE] = {
+// Simple GATT Profile Service UUID: 0001
+const uint8_t serial_profileServUUID[ATT_BT_UUID_SIZE] = {
     LO_UINT16(SIMPLEPROFILE_SERV_UUID), HI_UINT16(SIMPLEPROFILE_SERV_UUID)};
 
-// Characteristic 1 UUID: 0xFFF1
-const uint8_t simpleProfilechar1UUID[ATT_BT_UUID_SIZE] = {
-    LO_UINT16(SIMPLEPROFILE_CHAR1_UUID), HI_UINT16(SIMPLEPROFILE_CHAR1_UUID)};
+const uint8_t serial_profileServUUID16[] = NUS_UUID128_ARR(SIMPLEPROFILE_SERV_UUID);
+const uint8_t serial_profilechar1UUID[] = NUS_UUID128_ARR(SIMPLEPROFILE_CHAR1RX_UUID);
+const uint8_t serial_profilechar2UUID[] = NUS_UUID128_ARR(SIMPLEPROFILE_CHAR2TX_UUID);
 
-// Characteristic 2 UUID: 0xFFF2
-const uint8_t simpleProfilechar2UUID[ATT_BT_UUID_SIZE] = {
-    LO_UINT16(SIMPLEPROFILE_CHAR2_UUID), HI_UINT16(SIMPLEPROFILE_CHAR2_UUID)};
+// Characteristic 1 UUID: 0x0002
+// const uint8_t serial_profilechar1UUID[ATT_BT_UUID_SIZE] = {
+//     LO_UINT16(SIMPLEPROFILE_CHAR1RX_UUID), HI_UINT16(SIMPLEPROFILE_CHAR1RX_UUID)};
+
+// // Characteristic 2 UUID: 0xFFF2
+// const uint8_t serial_profilechar2UUID[ATT_BT_UUID_SIZE] = {
+//     LO_UINT16(SIMPLEPROFILE_CHAR2TX_UUID), HI_UINT16(SIMPLEPROFILE_CHAR2TX_UUID)};
 
 // Characteristic 3 UUID: 0xFFF3
-const uint8_t simpleProfilechar3UUID[ATT_BT_UUID_SIZE] = {
+const uint8_t serial_profilechar3UUID[ATT_BT_UUID_SIZE] = {
     LO_UINT16(SIMPLEPROFILE_CHAR3_UUID), HI_UINT16(SIMPLEPROFILE_CHAR3_UUID)};
 
 // Characteristic 4 UUID: 0xFFF4
-const uint8_t simpleProfilechar4UUID[ATT_BT_UUID_SIZE] = {
+const uint8_t serial_profilechar4UUID[ATT_BT_UUID_SIZE] = {
     LO_UINT16(SIMPLEPROFILE_CHAR4_UUID), HI_UINT16(SIMPLEPROFILE_CHAR4_UUID)};
 
 // Characteristic 5 UUID: 0xFFF5
-const uint8_t simpleProfilechar5UUID[ATT_BT_UUID_SIZE] = {
+const uint8_t serial_profilechar5UUID[ATT_BT_UUID_SIZE] = {
     LO_UINT16(SIMPLEPROFILE_CHAR5_UUID), HI_UINT16(SIMPLEPROFILE_CHAR5_UUID)};
 
 /*********************************************************************
@@ -70,210 +78,229 @@ const uint8_t simpleProfilechar5UUID[ATT_BT_UUID_SIZE] = {
  * LOCAL VARIABLES
  */
 
-static simpleProfileCBs_t *simpleProfile_AppCBs = NULL;
+static serial_profileCBs_t *serial_profile_AppCBs = NULL;
 
 /*********************************************************************
  * Profile Attributes - variables
  */
 
 // Simple Profile Service attribute
-static const gattAttrType_t simpleProfileService = {ATT_BT_UUID_SIZE, simpleProfileServUUID};
+// static const gattAttrType_t serial_profileService = {ATT_BT_UUID_SIZE, serial_profileServUUID};
+static const gattAttrType_t serial_profileService16 = {sizeof(serial_profileServUUID16), serial_profileServUUID16};
 
 // Simple Profile Characteristic 1 Properties
-static uint8_t simpleProfileChar1Props = GATT_PROP_READ | GATT_PROP_WRITE;
+static uint8_t serial_profileChar1Props = GATT_PROP_READ | GATT_PROP_WRITE;
 
-// Characteristic 1 Value
-static uint8_t simpleProfileChar1[SIMPLEPROFILE_CHAR1_LEN] = {0};
+// Characteristic 1 RX Value
+static uint8_t serial_profileChar1[SIMPLEPROFILE_CHAR1RX_LEN] = {0};
 
 // Simple Profile Characteristic 1 User Description
-static uint8_t simpleProfileChar1UserDesp[] = "Characteristic 1\0";
-
+static uint8_t serial_profileChar1UserDesp[] = "Characteristic 1 RX\0";
 // Simple Profile Characteristic 2 Properties
-static uint8_t simpleProfileChar2Props = GATT_PROP_READ;
+static uint8_t serial_profileChar2Props = GATT_PROP_NOTIFY;
 
 // Characteristic 2 Value
-static uint8_t simpleProfileChar2[SIMPLEPROFILE_CHAR2_LEN] = {0};
-
+static uint8_t serial_profileChar2[SIMPLEPROFILE_CHAR2TX_LEN] = {0};
 // Simple Profile Characteristic 2 User Description
-static uint8_t simpleProfileChar2UserDesp[] = "Characteristic 2\0";
+static uint8_t serial_profileChar2UserDesp[] = "Characteristic 2 TX\0";
 
 // Simple Profile Characteristic 3 Properties
-static uint8_t simpleProfileChar3Props = GATT_PROP_WRITE;
+static uint8_t serial_profileChar3Props = GATT_PROP_NOTIFY;
 
 // Characteristic 3 Value
-static uint8_t simpleProfileChar3[SIMPLEPROFILE_CHAR3_LEN] = {0};
+static uint8_t serial_profileChar3[SIMPLEPROFILE_CHAR3_LEN] = {0};
 
 // Simple Profile Characteristic 3 User Description
-static uint8_t simpleProfileChar3UserDesp[] = "Characteristic 3\0";
+static uint8_t serial_profileChar3UserDesp[] = "Characteristic 3\0";
 
 // Simple Profile Characteristic 4 Properties
-static uint8_t simpleProfileChar4Props = GATT_PROP_NOTIFY;
+static uint8_t serial_profileChar4Props = GATT_PROP_NOTIFY;
 
 // Characteristic 4 Value
-static uint8_t simpleProfileChar4[1] = {0};
+static uint8_t serial_profileChar4[1] = {0};
 
 // Simple Profile Characteristic 4 Configuration Each client has its own
 // instantiation of the Client Characteristic Configuration. Reads of the
 // Client Characteristic Configuration only shows the configuration for
 // that client and writes only affect the configuration of that client.
-static gattCharCfg_t simpleProfileChar4Config[1];
+static gattCharCfg_t serial_profileChar4Config[1];
 
 // Simple Profile Characteristic 4 User Description
-static uint8_t simpleProfileChar4UserDesp[] = "Characteristic 4\0";
+static uint8_t serial_profileChar4UserDesp[] = "Characteristic 4\0";
 
 // Simple Profile Characteristic 5 Properties
-static uint8_t simpleProfileChar5Props = GATT_PROP_READ;
+static uint8_t serial_profileChar5Props = GATT_PROP_READ;
 
 // Characteristic 5 Value
-static uint8_t simpleProfileChar5[SIMPLEPROFILE_CHAR5_LEN] = {0};
+static uint8_t serial_profileChar5[SIMPLEPROFILE_CHAR5_LEN] = {0};
 
 // Simple Profile Characteristic 5 User Description
-static uint8_t simpleProfileChar5UserDesp[] = "Characteristic 5\0";
+static uint8_t serial_profileChar5UserDesp[] = "Characteristic 5\0";
 
 /*********************************************************************
- * Profile Attributes - Table
+ * Profile Attributes tab - Table Len-Type-Value like
  */
 
-static gattAttribute_t simpleProfileAttrTbl[] = {
+typedef enum {
+    SERIAL_IDX_SERVICE = 0,
+
+    SERIAL_IDX_CHAR_RX_DECLARATION,
+    SERIAL_IDX_CHAR_RX_VALUE,
+    // SERIAL_IDX_CHAR_RX_USER_DESCRIPTION,
+
+    SERIAL_IDX_CHAR_TX_DECLARATION,
+    SERIAL_IDX_CHAR_TX_VALUE,
+    SERIAL_IDX_CHAR_TX_CFG, //tx have ccc
+} profile_attr_index_e;
+
+static gattAttribute_t serial_profileAttrTbl[] = {
     // Simple Profile Service
     {
         {ATT_BT_UUID_SIZE, primaryServiceUUID}, /* type */
         GATT_PERMIT_READ,                       /* permissions */
         0,                                      /* handle */
-        (uint8_t *)&simpleProfileService        /* pValue */
+        (uint8_t *)&serial_profileService16        /* pValue */
     },
 
-    // Characteristic 1 Declaration
+    // Characteristic 1 RX Declaration
     {
         {ATT_BT_UUID_SIZE, characterUUID},
         GATT_PERMIT_READ,
         0,
-        &simpleProfileChar1Props},
+        &serial_profileChar1Props},
 
-    // Characteristic Value 1
+    // Characteristic RX Value 1
     {
-        {ATT_BT_UUID_SIZE, simpleProfilechar1UUID},
+        {sizeof(serial_profilechar1UUID), serial_profilechar1UUID},
+        GATT_PERMIT_READ|GATT_PERMIT_WRITE,
+        0,
+        serial_profileChar1},
+#if CHAR_USER_DESCRIPTION
+    // Characteristic 1 RX User Description(optional)
+    {
+        {ATT_BT_UUID_SIZE, charUserDescUUID},
+        GATT_PERMIT_READ,
+        0,
+        serial_profileChar1UserDesp},
+#endif
+    // Characteristic 2 TX Declaration
+    {
+        {ATT_BT_UUID_SIZE, characterUUID},
+        GATT_PERMIT_READ,
+        0,
+        &serial_profileChar2Props},
+
+    // Characteristic Value 2 TX
+    {
+        {sizeof(serial_profilechar2UUID), serial_profilechar2UUID},
+        GATT_PERMIT_READ,
+        0,
+        serial_profileChar2},
+    // Characteristic 2 TX configuration
+    {
+        {ATT_BT_UUID_SIZE, clientCharCfgUUID},
         GATT_PERMIT_READ | GATT_PERMIT_WRITE,
         0,
-        simpleProfileChar1},
-
-    // Characteristic 1 User Description
+        (uint8_t *)serial_profileChar4Config},
+        
+#if CHAR_USER_DESCRIPTION
+    // Characteristic 2 TX User Description
     {
         {ATT_BT_UUID_SIZE, charUserDescUUID},
         GATT_PERMIT_READ,
         0,
-        simpleProfileChar1UserDesp},
-/*
-    // Characteristic 2 Declaration
-    {
-        {ATT_BT_UUID_SIZE, characterUUID},
-        GATT_PERMIT_READ,
-        0,
-        &simpleProfileChar2Props},
-
-    // Characteristic Value 2
-    {
-        {ATT_BT_UUID_SIZE, simpleProfilechar2UUID},
-        GATT_PERMIT_READ,
-        0,
-        simpleProfileChar2},
-
-    // Characteristic 2 User Description
-    {
-        {ATT_BT_UUID_SIZE, charUserDescUUID},
-        GATT_PERMIT_READ,
-        0,
-        simpleProfileChar2UserDesp},
-
+        serial_profileChar2UserDesp},
+#endif
+#if 0 //hide 345
     // Characteristic 3 Declaration
     {
         {ATT_BT_UUID_SIZE, characterUUID},
         GATT_PERMIT_READ,
         0,
-        &simpleProfileChar3Props},
+        &serial_profileChar3Props},
 
     // Characteristic Value 3
     {
-        {ATT_BT_UUID_SIZE, simpleProfilechar3UUID},
+        {ATT_BT_UUID_SIZE, serial_profilechar3UUID},
         GATT_PERMIT_WRITE,
         0,
-        simpleProfileChar3},
+        serial_profileChar3},
 
     // Characteristic 3 User Description
     {
         {ATT_BT_UUID_SIZE, charUserDescUUID},
         GATT_PERMIT_READ,
         0,
-        simpleProfileChar3UserDesp},
+        serial_profileChar3UserDesp},
 
     // Characteristic 4 Declaration
     {
         {ATT_BT_UUID_SIZE, characterUUID},
         GATT_PERMIT_READ,
         0,
-        &simpleProfileChar4Props},
+        &serial_profileChar4Props},
 
     // Characteristic Value 4
     {
-        {ATT_BT_UUID_SIZE, simpleProfilechar4UUID},
+        {ATT_BT_UUID_SIZE, serial_profilechar4UUID},
         0,
         0,
-        simpleProfileChar4},
+        serial_profileChar4},
 
     // Characteristic 4 configuration
     {
         {ATT_BT_UUID_SIZE, clientCharCfgUUID},
         GATT_PERMIT_READ | GATT_PERMIT_WRITE,
         0,
-        (uint8_t *)simpleProfileChar4Config},
+        (uint8_t *)serial_profileChar4Config},
 
     // Characteristic 4 User Description
     {
         {ATT_BT_UUID_SIZE, charUserDescUUID},
         GATT_PERMIT_READ,
         0,
-        simpleProfileChar4UserDesp},
+        serial_profileChar4UserDesp},
 
     // Characteristic 5 Declaration
     {
         {ATT_BT_UUID_SIZE, characterUUID},
         GATT_PERMIT_READ,
         0,
-        &simpleProfileChar5Props},
+        &serial_profileChar5Props},
 
     // Characteristic Value 5
     {
-        {ATT_BT_UUID_SIZE, simpleProfilechar5UUID},
+        {ATT_BT_UUID_SIZE, serial_profilechar5UUID},
         GATT_PERMIT_AUTHEN_READ,
         0,
-        simpleProfileChar5},
+        serial_profileChar5},
 
     // Characteristic 5 User Description
     {
         {ATT_BT_UUID_SIZE, charUserDescUUID},
         GATT_PERMIT_READ,
         0,
-        simpleProfileChar5UserDesp},
-*/
+        serial_profileChar5UserDesp},
+#endif
 };
 
 /*********************************************************************
  * LOCAL FUNCTIONS
  */
-static bStatus_t simpleProfile_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr,
+static bStatus_t serial_profile_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr,
                                           uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8_t method);
-static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr,
+static bStatus_t serial_profile_WriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr,
                                            uint8_t *pValue, uint16_t len, uint16_t offset, uint8_t method);
 
-static void simpleProfile_HandleConnStatusCB(uint16_t connHandle, uint8_t changeType);
+static void serial_profile_HandleConnStatusCB(uint16_t connHandle, uint8_t changeType);
 
 /*********************************************************************
  * PROFILE CALLBACKS
  */
 // Simple Profile Service Callbacks
-gattServiceCBs_t simpleProfileCBs = {
-    simpleProfile_ReadAttrCB,  // Read callback function pointer
-    simpleProfile_WriteAttrCB, // Write callback function pointer
+gattServiceCBs_t serial_profileCBs = {
+    serial_profile_ReadAttrCB,  // Read callback function pointer
+    serial_profile_WriteAttrCB, // Write callback function pointer
     NULL                       // Authorization callback function pointer
 };
 
@@ -297,18 +324,18 @@ bStatus_t SimpleProfile_AddService(uint32_t services)
     uint8_t status = SUCCESS;
 
     // Initialize Client Characteristic Configuration attributes
-    GATTServApp_InitCharCfg(INVALID_CONNHANDLE, simpleProfileChar4Config);
+    GATTServApp_InitCharCfg(INVALID_CONNHANDLE, serial_profileChar4Config);
 
     // Register with Link DB to receive link status change callback
-    linkDB_Register(simpleProfile_HandleConnStatusCB);
+    linkDB_Register(serial_profile_HandleConnStatusCB);
 
     if(services & SIMPLEPROFILE_SERVICE)
     {
         // Register GATT attribute list and CBs with GATT Server App
-        status = GATTServApp_RegisterService(simpleProfileAttrTbl,
-                                             GATT_NUM_ATTRS(simpleProfileAttrTbl),
+        status = GATTServApp_RegisterService(serial_profileAttrTbl,
+                                             GATT_NUM_ATTRS(serial_profileAttrTbl),
                                              GATT_MAX_ENCRYPT_KEY_SIZE,
-                                             &simpleProfileCBs);
+                                             &serial_profileCBs);
     }
 
     return (status);
@@ -324,11 +351,11 @@ bStatus_t SimpleProfile_AddService(uint32_t services)
  *
  * @return  SUCCESS or bleAlreadyInRequestedMode
  */
-bStatus_t SimpleProfile_RegisterAppCBs(simpleProfileCBs_t *appCallbacks)
+bStatus_t SimpleProfile_RegisterAppCBs(serial_profileCBs_t *appCallbacks)
 {
     if(appCallbacks)
     {
-        simpleProfile_AppCBs = appCallbacks;
+        serial_profile_AppCBs = appCallbacks;
 
         return (SUCCESS);
     }
@@ -358,9 +385,9 @@ bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value)
     switch(param)
     {
         case SIMPLEPROFILE_CHAR1:
-            if(len == SIMPLEPROFILE_CHAR1_LEN)
+            if(len == SIMPLEPROFILE_CHAR1RX_LEN)
             {
-                tmos_memcpy(simpleProfileChar1, value, SIMPLEPROFILE_CHAR1_LEN);
+                tmos_memcpy(serial_profileChar1, value, SIMPLEPROFILE_CHAR1RX_LEN);
             }
             else
             {
@@ -369,9 +396,9 @@ bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value)
             break;
 
         case SIMPLEPROFILE_CHAR2:
-            if(len == SIMPLEPROFILE_CHAR2_LEN)
+            if(len == SIMPLEPROFILE_CHAR2TX_LEN)
             {
-                tmos_memcpy(simpleProfileChar2, value, SIMPLEPROFILE_CHAR2_LEN);
+                tmos_memcpy(serial_profileChar2, value, SIMPLEPROFILE_CHAR2TX_LEN);
             }
             else
             {
@@ -382,7 +409,7 @@ bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value)
         case SIMPLEPROFILE_CHAR3:
             if(len == SIMPLEPROFILE_CHAR3_LEN)
             {
-                tmos_memcpy(simpleProfileChar3, value, SIMPLEPROFILE_CHAR3_LEN);
+                tmos_memcpy(serial_profileChar3, value, SIMPLEPROFILE_CHAR3_LEN);
             }
             else
             {
@@ -393,7 +420,7 @@ bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value)
         case SIMPLEPROFILE_CHAR4:
             if(len == SIMPLEPROFILE_CHAR4_LEN)
             {
-                tmos_memcpy(simpleProfileChar4, value, SIMPLEPROFILE_CHAR4_LEN);
+                tmos_memcpy(serial_profileChar4, value, SIMPLEPROFILE_CHAR4_LEN);
             }
             else
             {
@@ -404,7 +431,7 @@ bStatus_t SimpleProfile_SetParameter(uint8_t param, uint8_t len, void *value)
         case SIMPLEPROFILE_CHAR5:
             if(len == SIMPLEPROFILE_CHAR5_LEN)
             {
-                tmos_memcpy(simpleProfileChar5, value, SIMPLEPROFILE_CHAR5_LEN);
+                tmos_memcpy(serial_profileChar5, value, SIMPLEPROFILE_CHAR5_LEN);
             }
             else
             {
@@ -439,23 +466,11 @@ bStatus_t SimpleProfile_GetParameter(uint8_t param, void *value)
     switch(param)
     {
         case SIMPLEPROFILE_CHAR1:
-            tmos_memcpy(value, simpleProfileChar1, SIMPLEPROFILE_CHAR1_LEN);
+            tmos_memcpy(value, serial_profileChar1, SIMPLEPROFILE_CHAR1RX_LEN);
             break;
 
         case SIMPLEPROFILE_CHAR2:
-            tmos_memcpy(value, simpleProfileChar2, SIMPLEPROFILE_CHAR2_LEN);
-            break;
-
-        case SIMPLEPROFILE_CHAR3:
-            tmos_memcpy(value, simpleProfileChar3, SIMPLEPROFILE_CHAR3_LEN);
-            break;
-
-        case SIMPLEPROFILE_CHAR4:
-            tmos_memcpy(value, simpleProfileChar4, SIMPLEPROFILE_CHAR4_LEN);
-            break;
-
-        case SIMPLEPROFILE_CHAR5:
-            tmos_memcpy(value, simpleProfileChar5, SIMPLEPROFILE_CHAR5_LEN);
+            tmos_memcpy(value, serial_profileChar2, SIMPLEPROFILE_CHAR2TX_LEN);
             break;
 
         default:
@@ -467,7 +482,7 @@ bStatus_t SimpleProfile_GetParameter(uint8_t param, void *value)
 }
 
 /*********************************************************************
- * @fn          simpleProfile_Notify
+ * @fn          serial_profile_Notify
  *
  * @brief       Send a notification containing a heart rate
  *              measurement.
@@ -477,15 +492,15 @@ bStatus_t SimpleProfile_GetParameter(uint8_t param, void *value)
  *
  * @return      Success or Failure
  */
-bStatus_t simpleProfile_Notify(uint16_t connHandle, attHandleValueNoti_t *pNoti)
+bStatus_t serial_profile_Notify(uint16_t connHandle, attHandleValueNoti_t *pNoti)
 {
-    uint16_t value = GATTServApp_ReadCharCfg(connHandle, simpleProfileChar4Config);
+    uint16_t value = GATTServApp_ReadCharCfg(connHandle, serial_profileChar4Config);
 
     // If notifications enabled
     if(value & GATT_CLIENT_CFG_NOTIFY)
     {
         // Set the handle
-        pNoti->handle = simpleProfileAttrTbl[SIMPLEPROFILE_CHAR4_VALUE_POS].handle;
+        pNoti->handle = serial_profileAttrTbl[SERIAL_IDX_CHAR_TX_VALUE].handle;
 
         // Send the notification
         return GATT_Notification(connHandle, pNoti, FALSE);
@@ -494,7 +509,7 @@ bStatus_t simpleProfile_Notify(uint16_t connHandle, attHandleValueNoti_t *pNoti)
 }
 
 /*********************************************************************
- * @fn          simpleProfile_ReadAttrCB
+ * @fn          serial_profile_ReadAttrCB
  *
  * @brief       Read an attribute.
  *
@@ -507,7 +522,7 @@ bStatus_t simpleProfile_Notify(uint16_t connHandle, attHandleValueNoti_t *pNoti)
  *
  * @return      Success or Failure
  */
-static bStatus_t simpleProfile_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr,
+static bStatus_t serial_profile_ReadAttrCB(uint16_t connHandle, gattAttribute_t *pAttr,
                                           uint8_t *pValue, uint16_t *pLen, uint16_t offset, uint16_t maxLen, uint8_t method)
 {
     bStatus_t status = SUCCESS;
@@ -519,10 +534,12 @@ static bStatus_t simpleProfile_ReadAttrCB(uint16_t connHandle, gattAttribute_t *
         return (ATT_ERR_ATTR_NOT_LONG);
     }
 
-    if(pAttr->type.len == ATT_BT_UUID_SIZE)
+    if(pAttr->type.len == 2 || pAttr->type.len == 16)
     {
         // 16-bit UUID
-        uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
+        uint16_t uuid = pAttr->type.len == 2 ? \
+            BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]) : \
+            BUILD_UINT16(pAttr->type.uuid[12], pAttr->type.uuid[13]);
         switch(uuid)
         {
             // No need for "GATT_SERVICE_UUID" or "GATT_CLIENT_CHAR_CFG_UUID" cases;
@@ -533,10 +550,10 @@ static bStatus_t simpleProfile_ReadAttrCB(uint16_t connHandle, gattAttribute_t *
             //   included here
             // characteristic 4 does not have read permissions, but because it
             //   can be sent as a notification, it is included here
-            case SIMPLEPROFILE_CHAR1_UUID:
-                if(maxLen > SIMPLEPROFILE_CHAR1_LEN)
+            case SIMPLEPROFILE_CHAR1RX_UUID:
+                if(maxLen > SIMPLEPROFILE_CHAR1RX_LEN)
                 {
-                    *pLen = SIMPLEPROFILE_CHAR1_LEN;
+                    *pLen = SIMPLEPROFILE_CHAR1RX_LEN;
                 }
                 else
                 {
@@ -545,10 +562,10 @@ static bStatus_t simpleProfile_ReadAttrCB(uint16_t connHandle, gattAttribute_t *
                 tmos_memcpy(pValue, pAttr->pValue, *pLen);
                 break;
 
-            case SIMPLEPROFILE_CHAR2_UUID:
-                if(maxLen > SIMPLEPROFILE_CHAR2_LEN)
+            case SIMPLEPROFILE_CHAR2TX_UUID:
+                if(maxLen > SIMPLEPROFILE_CHAR2TX_LEN)
                 {
-                    *pLen = SIMPLEPROFILE_CHAR2_LEN;
+                    *pLen = SIMPLEPROFILE_CHAR2TX_LEN;
                 }
                 else
                 {
@@ -599,7 +616,7 @@ static bStatus_t simpleProfile_ReadAttrCB(uint16_t connHandle, gattAttribute_t *
 }
 
 /*********************************************************************
- * @fn      simpleProfile_WriteAttrCB
+ * @fn      serial_profile_WriteAttrCB
  *
  * @brief   Validate attribute data prior to a write operation
  *
@@ -611,7 +628,7 @@ static bStatus_t simpleProfile_ReadAttrCB(uint16_t connHandle, gattAttribute_t *
  *
  * @return  Success or Failure
  */
-static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr,
+static bStatus_t serial_profile_WriteAttrCB(uint16_t connHandle, gattAttribute_t *pAttr,
                                            uint8_t *pValue, uint16_t len, uint16_t offset, uint8_t method)
 {
     bStatus_t status = SUCCESS;
@@ -624,18 +641,21 @@ static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t 
         return (ATT_ERR_INSUFFICIENT_AUTHOR);
     }
 
-    if(pAttr->type.len == ATT_BT_UUID_SIZE)
+    if(pAttr->type.len >= 2 || pAttr->type.len <= 16)
     {
         // 16-bit UUID
-        uint16_t uuid = BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]);
+        uint16_t uuid = pAttr->type.len == 2 ? \
+            BUILD_UINT16(pAttr->type.uuid[0], pAttr->type.uuid[1]) : \
+            BUILD_UINT16(pAttr->type.uuid[12], pAttr->type.uuid[13]);
+
         switch(uuid)
         {
-            case SIMPLEPROFILE_CHAR1_UUID:
+            case SIMPLEPROFILE_CHAR1RX_UUID:
                 //Validate the value
                 // Make sure it's not a blob oper
                 if(offset == 0)
                 {
-                    if(len > SIMPLEPROFILE_CHAR1_LEN)
+                    if(len > SIMPLEPROFILE_CHAR1RX_LEN)
                     {
                         status = ATT_ERR_INVALID_VALUE_SIZE;
                     }
@@ -644,20 +664,20 @@ static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t 
                 {
                     status = ATT_ERR_ATTR_NOT_LONG;
                 }
-
+                
+                char *data = (char*)pValue;
                 //Write the value
                 if(status == SUCCESS)
                 {
-                    tmos_memcpy(pAttr->pValue, pValue, SIMPLEPROFILE_CHAR1_LEN);
-                    if (*pValue != 0) { //记得解引用
-                        GPIOA_SetBits(GPIO_Pin_9);
-                    } else {
-                        GPIOA_ResetBits(GPIO_Pin_9);
-                    }
+                    tmos_memcpy(pAttr->pValue, pValue, SIMPLEPROFILE_CHAR1RX_LEN);
                     notifyApp = SIMPLEPROFILE_CHAR1;
                 }
+                PRINT("rx %d %s\r\n", len, data);
+                extern void bleSerialTxNotify(uint8_t* data, uint16_t sz);
+                bleSerialTxNotify(pValue, len);
                 break;
-
+            
+            #if 0
             case SIMPLEPROFILE_CHAR3_UUID:
                 //Validate the value
                 // Make sure it's not a blob oper
@@ -680,10 +700,12 @@ static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t 
                     notifyApp = SIMPLEPROFILE_CHAR3;
                 }
                 break;
+            #endif
 
             case GATT_CLIENT_CHAR_CFG_UUID:
                 status = GATTServApp_ProcessCCCWriteReq(connHandle, pAttr, pValue, len,
                                                         offset, GATT_CLIENT_CFG_NOTIFY);
+                PRINT("GATT char cfg uuid notify\r\n");
                 break;
 
             default:
@@ -699,16 +721,16 @@ static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t 
     }
 
     // If a charactersitic value changed then callback function to notify application of change
-    if((notifyApp != 0xFF) && simpleProfile_AppCBs && simpleProfile_AppCBs->pfnSimpleProfileChange)
+    if((notifyApp != 0xFF) && serial_profile_AppCBs && serial_profile_AppCBs->pfnSimpleProfileChange)
     {
-        simpleProfile_AppCBs->pfnSimpleProfileChange(notifyApp, pValue, len);
+        serial_profile_AppCBs->pfnSimpleProfileChange(notifyApp, pValue, len);
     }
 
     return (status);
 }
 
 /*********************************************************************
- * @fn          simpleProfile_HandleConnStatusCB
+ * @fn          serial_profile_HandleConnStatusCB
  *
  * @brief       Simple Profile link status change handler function.
  *
@@ -717,7 +739,7 @@ static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle, gattAttribute_t 
  *
  * @return      none
  */
-static void simpleProfile_HandleConnStatusCB(uint16_t connHandle, uint8_t changeType)
+static void serial_profile_HandleConnStatusCB(uint16_t connHandle, uint8_t changeType)
 {
     // Make sure this is not loopback connection
     if(connHandle != LOOPBACK_CONNHANDLE)
@@ -727,7 +749,8 @@ static void simpleProfile_HandleConnStatusCB(uint16_t connHandle, uint8_t change
            ((changeType == LINKDB_STATUS_UPDATE_STATEFLAGS) &&
             (!linkDB_Up(connHandle))))
         {
-            GATTServApp_InitCharCfg(connHandle, simpleProfileChar4Config);
+            GATTServApp_InitCharCfg(connHandle, serial_profileChar4Config);
+            PRINT("con%d <=> chartxcfg", connHandle);
         }
     }
 }

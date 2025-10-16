@@ -9,3 +9,4 @@ xpack-riscv-none-elf-gcc-14.2.0-3
 *.hex
 *.lst
 *.map
+*.bin
