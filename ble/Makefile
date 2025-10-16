@@ -4,6 +4,7 @@
 # Prefix for newer riscv gcc is  risv-none-elf
 # TOOLCHAIN_PREFIX := riscv-none-embed
 TOOLCHAIN_PREFIX := riscv-wch-elf
+TARGET := cock
 
 
 
@@ -59,10 +60,9 @@ STDPERIPHDRIVER_LIBS := -L"./sdk/StdPeriphDriver" -lISP572
 BLE_LIB_LIBS := -L"./sdk/BLELIB" -lCH572BLE_PERI
 LIBS := $(STDPERIPHDRIVER_LIBS) $(BLE_LIB_LIBS)
 
-SECONDARY_FLASH := hid_keyboard.hex
-SECONDARY_LIST := hid_keyboard.lst
-SECONDARY_SIZE := hid_keyboard.siz
-SECONDARY_BIN := hid_keyboard.bin
+SECONDARY_FLASH := $(TARGET).hex
+SECONDARY_LIST := $(TARGET).lst
+SECONDARY_SIZE := $(TARGET).siz
 
 # ARCH is rv32imac on older gcc, rv32imac_zicsr on newer gcc
 # ARCH := rv32imac
@@ -84,7 +84,7 @@ CFLAGS_COMMON := \
   -g
 
 .PHONY: all
-all: hid_keyboard.elf secondary-outputs
+all: $(TARGET).elf secondary-outputs
 
 .PHONY: clean
 clean:
@@ -92,14 +92,14 @@ clean:
 	-rm $(MAKEFILE_DEPS)
 	-rm $(SECONDARY_FLASH)
 	-rm $(SECONDARY_LIST)
-	-rm hid_keyboard.elf
-	-rm hid_keyboard.map
-	-rm hid_keyboard.bin
+	-rm $(TARGET).elf
+	-rm $(TARGET).map
+	-rm $(TARGET).bin
 
 .PHONY: secondary-outputs
 secondary-outputs: $(SECONDARY_FLASH) $(SECONDARY_LIST) $(SECONDARY_SIZE) $(SECONDARY_BIN)
 
-hid_keyboard.elf: $(OBJS)
+$(TARGET).elf: $(OBJS)
 	${TOOLCHAIN_PREFIX}-gcc \
 	    $(CFLAGS_COMMON) \
 	    -T "sdk/Ld/Link.ld" \
@@ -108,11 +108,11 @@ hid_keyboard.elf: $(OBJS)
 	    --gc-sections \
 	    -Xlinker \
 	    --print-memory-usage \
-	    -Wl,-Map,"hid_keyboard.map" \
+	    -Wl,-Map,"$(TARGET).map" \
 	    -Lobj \
 	    --specs=nano.specs \
 	    --specs=nosys.specs \
-	    -o "hid_keyboard.elf" \
+	    -o "$(TARGET).elf" \
 	    $(OBJS) \
 	    $(LIBS)
 
