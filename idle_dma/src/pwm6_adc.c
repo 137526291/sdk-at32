@@ -1,13 +1,13 @@
 
 #include "at32f421.h"
+#include "log.h"
 
-uint16_t timer_period = 0;
+uint16_t timer_period;
 uint16_t t1ccr[3];
 
-__IO uint16_t adc1_ordinary_valuetab[3][3] = {0};
-__IO uint16_t adc1_preempt_valuetab[3][3] = {0};
-__IO uint16_t dma_trans_complete_flag = 0;
-__IO uint16_t preempt_trigger_count = 0;
+uint16_t adc1_regv[3];
+uint16_t adc1_injv[3];
+uint16_t injcnt;
 
 //tim1 6pwm cfg, lowabc - highabc : a7 b0 b1 a8 a9 a10
 int pwm6_adc_init(void)
@@ -75,6 +75,8 @@ int pwm6_adc_init(void)
     adc_preempt_channel_set(ADC1, ADC_CHANNEL_4, 1, ADC_SAMPLETIME_239_5);
     adc_preempt_channel_set(ADC1, ADC_CHANNEL_5, 2, ADC_SAMPLETIME_239_5);
     adc_preempt_conversion_trigger_set(ADC1, ADC12_PREEMPT_TRIG_TMR1CH4, TRUE);
+    // adc_preempt_conversion_trigger_set(ADC1, ADC12_PREEMPT_TRIG_SOFTWARE, TRUE);
+    adc_preempt_auto_mode_enable(ADC1, TRUE);
     adc_interrupt_enable(ADC1, ADC_PCCE_INT, TRUE);
 
     adc_enable(ADC1, TRUE);
@@ -137,10 +139,12 @@ int pwm6_adc_init(void)
     tmr_output_channel_config(TMR1, TMR_SELECT_CHANNEL_1, &tmr_output_struct);
     tmr_output_channel_config(TMR1, TMR_SELECT_CHANNEL_2, &tmr_output_struct);
     tmr_output_channel_config(TMR1, TMR_SELECT_CHANNEL_3, &tmr_output_struct);
+    tmr_output_channel_config(TMR1, TMR_SELECT_CHANNEL_4, &tmr_output_struct);
 
     tmr_channel_value_set(TMR1, TMR_SELECT_CHANNEL_1, t1ccr[0]);
     tmr_channel_value_set(TMR1, TMR_SELECT_CHANNEL_2, t1ccr[1]);
     tmr_channel_value_set(TMR1, TMR_SELECT_CHANNEL_3, t1ccr[2]);
+    TMR1->c4dt = 1;
 
     /* automatic output enable, stop, dead time and lock configuration */
     tmr_brkdt_default_para_init(&tmr_brkdt_config_struct);
@@ -165,11 +169,11 @@ void ADC1_CMP_IRQHandler(void)
   if(adc_interrupt_flag_get(ADC1, ADC_PCCE_FLAG) != RESET)
   {
     adc_flag_clear(ADC1, ADC_PCCE_FLAG);
-    if(preempt_trigger_count < 2)
+    // if(injcnt < 2)
     {
-      adc1_preempt_valuetab[preempt_trigger_count][0] = adc_preempt_conversion_data_get(ADC1, ADC_PREEMPT_CHANNEL_1);
-      adc1_preempt_valuetab[preempt_trigger_count][1] = adc_preempt_conversion_data_get(ADC1, ADC_PREEMPT_CHANNEL_2);
-      preempt_trigger_count++;
+      adc1_injv[0] = adc_preempt_conversion_data_get(ADC1, ADC_PREEMPT_CHANNEL_1);
+      adc1_injv[1] = adc_preempt_conversion_data_get(ADC1, ADC_PREEMPT_CHANNEL_2);
+      injcnt++;
     }
   }
 }

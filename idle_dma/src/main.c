@@ -414,6 +414,7 @@ int pwm6_adc_init(void);
  * @param  none
  * @retval none
  */
+extern uint16_t adc1_injv[];
 int main(void)
 {
     system_clock_config();
@@ -439,6 +440,10 @@ int main(void)
         // dmatx_u1("6", 1);
         // while(usart_flag_get(USART1, USART_TDBE_FLAG) == RESET);
         // usart_data_transmit(USART1, 0x55);
+        // adc_preempt_software_trigger_enable(ADC1, TRUE);
+        LOGI("adcpv=%4d %4d\r\n", adc1_injv[0], adc1_injv[1]);
+        LOGI("tim1 cnt=%d, %d %d %d %d\r\n", TMR1->cval,
+          TMR1->c1dt, TMR1->c2dt, TMR1->c3dt, TMR1->c4dt);
         delay_ms(1000);
 
         // while(usart_flag_get(USART2, USART_TDBE_FLAG) == RESET);
