@@ -13,6 +13,11 @@
             "runToEntryPoint": "main",
             "servertype": "jlink",
             "device": "AT32F421K8T7",
+            "svdFile": "project/at_start_f421/templates/at32_ide/SVD/AT32F421xx_v2.svd",
+            "liveWatch": {
+                "enabled": true,
+                "samplesPerSecond": 4
+            }
         }
     ]
 }
