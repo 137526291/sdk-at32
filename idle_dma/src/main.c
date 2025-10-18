@@ -414,7 +414,13 @@ int pwm6_adc_init(void);
  * @param  none
  * @retval none
  */
+#include "foc_f32.h"
+extern foc_var_f32_t fv0;
+extern volatile ob_var_t obv;
 extern uint16_t adc1_injv[];
+
+void drive_foc_init();
+
 int main(void)
 {
     system_clock_config();
@@ -422,6 +428,7 @@ int main(void)
     // dma_configuration();
     uart1_init(115200);
     uart2_init(115200);
+    drive_foc_init();
     pwm6_adc_init();
     delay_init();
     LOGI("u1 idle dma example fuck at32\r\n");
@@ -441,7 +448,8 @@ int main(void)
         // while(usart_flag_get(USART1, USART_TDBE_FLAG) == RESET);
         // usart_data_transmit(USART1, 0x55);
         // adc_preempt_software_trigger_enable(ADC1, TRUE);
-        LOGI("adcpv=%4d %4d\r\n", adc1_injv[0], adc1_injv[1]);
+        LOGI("adcpv=%4d %4d %4d %4d %d\r\n", 
+            fv0.jsia, fv0.jsib, adc1_injv[0], adc1_injv[1], adc1_injv[2]);
         LOGI("tim1 cnt=%d, %d %d %d %d\r\n", TMR1->cval,
           TMR1->c1dt, TMR1->c2dt, TMR1->c3dt, TMR1->c4dt);
         delay_ms(1000);

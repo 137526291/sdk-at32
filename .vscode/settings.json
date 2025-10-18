@@ -3,6 +3,7 @@
         "log.h": "c",
         "at32f421_board.h": "c",
         "stdlib.h": "c",
-        "config.h": "c"
+        "config.h": "c",
+        "foc_f32.h": "c"
     }
 }

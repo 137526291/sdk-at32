@@ -15,3 +15,7 @@
 - input
 - 连续32个脉宽最小值需要>200 <20000
 
+### foc debug
+1. check align A/B/C (openloop to check real ia ib ic)
+2. check pi. (tune)
+

@@ -38,6 +38,9 @@ BUILD_DIR = build
 ######################################
 # C sources
 C_SOURCES =  \
+src/foc_port.c \
+src/mc_math.c \
+src/foc_f32.c \
 src/pwm6_adc.c \
 src/delay.c \
 src/main.c \

@@ -1,6 +1,8 @@
 
 #include "at32f421.h"
 #include "log.h"
+#include "foc_cfg.h"
+#include "foc_f32.h"
 
 uint16_t timer_period;
 uint16_t t1ccr[3];
@@ -32,7 +34,7 @@ int pwm6_adc_init(void)
 
     gpio_default_para_init(&gpio_init_struct);
     gpio_init_struct.gpio_mode = GPIO_MODE_ANALOG;
-    gpio_init_struct.gpio_pins = GPIO_PINS_0 | GPIO_PINS_4 | GPIO_PINS_5;
+    gpio_init_struct.gpio_pins = GPIO_PINS_0 | GPIO_PINS_4 | GPIO_PINS_5 | GPIO_PINS_6;
     gpio_init(GPIOA, &gpio_init_struct);
 
     /* timer1 output pin configuration */
@@ -72,8 +74,9 @@ int pwm6_adc_init(void)
     adc_ordinary_part_mode_enable(ADC1, TRUE);
 
     adc_preempt_channel_length_set(ADC1, 2);
-    adc_preempt_channel_set(ADC1, ADC_CHANNEL_4, 1, ADC_SAMPLETIME_239_5);
-    adc_preempt_channel_set(ADC1, ADC_CHANNEL_5, 2, ADC_SAMPLETIME_239_5);
+    adc_preempt_channel_set(ADC1, ADC_CHANNEL_4, 1, ADC_SAMPLETIME_13_5);
+    adc_preempt_channel_set(ADC1, ADC_CHANNEL_5, 2, ADC_SAMPLETIME_13_5);
+    adc_preempt_channel_set(ADC1, ADC_CHANNEL_6, 3, ADC_SAMPLETIME_13_5);
     adc_preempt_conversion_trigger_set(ADC1, ADC12_PREEMPT_TRIG_TMR1CH4, TRUE);
     // adc_preempt_conversion_trigger_set(ADC1, ADC12_PREEMPT_TRIG_SOFTWARE, TRUE);
     adc_preempt_auto_mode_enable(ADC1, TRUE);
@@ -122,7 +125,7 @@ int pwm6_adc_init(void)
     /* compute ccr3 value to generate a duty cycle at 12.5%  for channel 3 and 3n */
     t1ccr[2] = (uint16_t)(((uint32_t)125 * (timer_period - 1)) / 1000);
 
-    tmr_base_init(TMR1, timer_period, 0);
+    tmr_base_init(TMR1, PWM_ARR-1, 0);
     tmr_cnt_dir_set(TMR1, TMR_COUNT_TWO_WAY_1);//center mode
 
     /* channel 1, 2, 3 and 4 Configuration in output mode */
@@ -144,13 +147,16 @@ int pwm6_adc_init(void)
     tmr_channel_value_set(TMR1, TMR_SELECT_CHANNEL_1, t1ccr[0]);
     tmr_channel_value_set(TMR1, TMR_SELECT_CHANNEL_2, t1ccr[1]);
     tmr_channel_value_set(TMR1, TMR_SELECT_CHANNEL_3, t1ccr[2]);
-    TMR1->c4dt = 1;
+    TMR1->c1dt = PWM_ARR/2;
+    TMR1->c2dt = PWM_ARR/2;
+    TMR1->c3dt = PWM_ARR/2;
+    TMR1->c4dt = 1;//PWM_ARR - 1;
 
     /* automatic output enable, stop, dead time and lock configuration */
     tmr_brkdt_default_para_init(&tmr_brkdt_config_struct);
     tmr_brkdt_config_struct.brk_enable = FALSE; //no brake func
     tmr_brkdt_config_struct.auto_output_enable = TRUE;
-    tmr_brkdt_config_struct.deadtime = 11;
+    tmr_brkdt_config_struct.deadtime = 8;
     tmr_brkdt_config_struct.fcsodis_state = TRUE;
     tmr_brkdt_config_struct.fcsoen_state = TRUE;
     tmr_brkdt_config_struct.brk_polarity = TMR_BRK_INPUT_ACTIVE_HIGH;
@@ -163,7 +169,7 @@ int pwm6_adc_init(void)
     /* enable tmr1 */
     tmr_counter_enable(TMR1, TRUE);
 }
-
+float norm0[3];
 void ADC1_CMP_IRQHandler(void)
 {
   if(adc_interrupt_flag_get(ADC1, ADC_PCCE_FLAG) != RESET)
@@ -173,7 +179,15 @@ void ADC1_CMP_IRQHandler(void)
     {
       adc1_injv[0] = adc_preempt_conversion_data_get(ADC1, ADC_PREEMPT_CHANNEL_1);
       adc1_injv[1] = adc_preempt_conversion_data_get(ADC1, ADC_PREEMPT_CHANNEL_2);
+      adc1_injv[2] = adc_preempt_conversion_data_get(ADC1, ADC_PREEMPT_CHANNEL_3);
       injcnt++;
+      extern foc_var_f32_t fv0;
+      norm0[0] = -(adc1_injv[0] - 2048) * (1/2048.0f); // * ADC2NORM;
+      norm0[1] = -(adc1_injv[1] - 2074) * (1/2048.0f); // * ADC2NORM;ic
+      norm0[2] = -norm0[0] - norm0[1];//ib= -ia -ic
+    // cs->jsia = inorm[0] * I_NORM2REAL * 1000;
+    // cs->jsib = inorm[1] * I_NORM2REAL * 1000;
+      foc_compute_f32(&fv0, norm0[0], norm0[2]);
     }
   }
 }
